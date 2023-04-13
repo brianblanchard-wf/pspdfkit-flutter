@@ -8,13 +8,18 @@
 ///
 
 import 'dart:async';
+
 import 'package:flutter/services.dart';
 
 class PspdfkitWidgetController {
   final MethodChannel _channel;
 
+  Function(String id)? onAnnotationSelected;
+
   PspdfkitWidgetController(int id)
-      : _channel = MethodChannel('com.pspdfkit.widget.$id');
+      : _channel = MethodChannel('com.pspdfkit.widget.$id') {
+    _channel.setMethodCallHandler(_onPlatformMethodCall);
+  }
 
   /// Sets the value of a form field by specifying its fully qualified field name.
   Future<bool?> setFormFieldValue(
@@ -80,4 +85,23 @@ class PspdfkitWidgetController {
   /// Saves the document back to its original location if it has been changed.
   /// If there were no changes to the document, the document file will not be modified.
   Future<bool?> save() async => _channel.invokeMethod('save');
+
+  Future<List<dynamic>> getAllAnnotations() async {
+    return (await _channel.invokeListMethod<dynamic>('getAllAnnotations')) ??
+        <dynamic>[];
+  }
+
+  Future<void> scrollToPage(int pageIndex) {
+    return _channel.invokeMethod('scrollToPage', pageIndex);
+  }
+
+  Future<void> _onPlatformMethodCall(MethodCall call) async {
+    switch (call.method) {
+      case 'didSelectAnnotations':
+        print('!!!!!!!!!!!!!!!!!!!! didSelectionAnnotations !!!!!!!!!!!!!!!');
+        print(call.arguments);
+        onAnnotationSelected?.call('commentId');
+        break;
+    }
+  }
 }

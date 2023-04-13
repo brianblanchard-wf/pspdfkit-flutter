@@ -156,6 +156,19 @@
             message:@"syncAnnotations can only be called on Instant document"
             details:nil]);
         }
+    } else if ([@"getAllAnnotations" isEqualToString:call.method]) {
+      NSDictionary<PSPDFDocumentPageNumber, NSArray<PSPDFAnnotation *> *> *annotationsForDoc = [[pdfViewController document] allAnnotationsOfType:PSPDFAnnotationTypeHighlight];
+            
+      NSMutableArray <NSDictionary *> *annotationsJSON = [[NSMutableArray alloc] init];
+            
+      [annotationsForDoc enumerateKeysAndObjectsUsingBlock:^(PSPDFDocumentPageNumber  _Nonnull key, NSArray<PSPDFAnnotation *> * _Nonnull obj, BOOL * _Nonnull stop) {
+        [annotationsJSON addObjectsFromArray:[PspdfkitFlutterConverter instantJSONFromAnnotations:obj]];
+      }];
+      
+      result(annotationsJSON);
+    } else if ([@"scrollToPage" isEqualToString:call.method]) {
+      NSNumber *pageIndex = [call arguments];
+      pdfViewController.pageIndex = [pageIndex unsignedLongValue];
     } else {
         result(FlutterMethodNotImplemented);
     }

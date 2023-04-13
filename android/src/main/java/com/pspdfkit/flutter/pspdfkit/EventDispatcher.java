@@ -77,6 +77,12 @@ public class EventDispatcher {
         }});
     }
 
+    public void notifyAnnotationsSelected(String annotationId) {
+        HashMap<String, String> args = new HashMap();
+        args.put("commentId", annotationId);
+        sendEvent("didSelectAnnotations", args);
+    }
+
     private void sendEvent(String eventName) {
         sendEvent(eventName, null);
     }

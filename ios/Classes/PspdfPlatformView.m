@@ -45,16 +45,17 @@
             [_flutterViewController addChildViewController:_navigationController];
             [_navigationController didMoveToParentViewController:_flutterViewController];
         }
-
+      
         NSString *documentPath = args[@"document"];
         if ([documentPath isKindOfClass:[NSString class]] == NO || [documentPath length] == 0) {
             NSLog(@"Warning: 'document' argument is not a string. Showing an empty view in default configuration.");
             _pdfViewController = [[PSPDFViewController alloc] init];
         } else {
             NSDictionary *configurationDictionary = [PspdfkitFlutterConverter processConfigurationOptionsDictionaryForPrefix:args[@"configuration"]];
-
+            
             PSPDFDocument *document = [PspdfkitFlutterHelper documentFromPath:documentPath];
             [PspdfkitFlutterHelper unlockWithPasswordIfNeeded:document dictionary:configurationDictionary];
+                        
 
             BOOL isImageDocument = [PspdfkitFlutterHelper isImageDocument:documentPath];
             PSPDFConfiguration *configuration = [PspdfkitFlutterConverter configuration:configurationDictionary isImageDocument:isImageDocument];
@@ -87,6 +88,9 @@
             // In this mode PDFViewController doesn’t hide the navigation bar on its own to avoid getting stuck.
             _navigationController.navigationBarHidden = YES;
         }
+        
+      
+        _navigationController.navigationBarHidden = YES;
         [_navigationController setViewControllers:@[_pdfViewController] animated:NO];
 
         __weak id weakSelf = self;
@@ -120,6 +124,20 @@
 - (void)pdfViewControllerDidDismiss:(PSPDFViewController *)pdfController {
     // Don't hold on to the view controller object after dismissal.
     [self cleanup];
+}
+
+- (void)pdfViewController:(PSPDFViewController *)pdfController didSelectAnnotations:(NSArray<PSPDFAnnotation *> *)annotations onPageView:(PSPDFPageView *)pageView {
+  NSString *commentId = @"";
+  [_channel invokeMethod:@"didSelectAnnotations" arguments:@{@"commentId": commentId}];
+}
+
+- (UIMenu *)pdfViewController:(PSPDFViewController *)sender menuForAnnotations:(NSArray<PSPDFAnnotation *> *)annotations onPageView:(PSPDFPageView *)pageView appearance:(PSPDFEditMenuAppearance)appearance suggestedMenu:(UIMenu *)suggestedMenu {
+    
+  return nil;
+}
+
+- (UIMenu *)pdfViewController:(PSPDFViewController *)sender menuForCreatingAnnotationAtPoint:(CGPoint)point onPageView:(PSPDFPageView *)pageView appearance:(PSPDFEditMenuAppearance)appearance suggestedMenu:(UIMenu *)suggestedMenu {
+  return nil;
 }
 
 @end

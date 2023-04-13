@@ -9,30 +9,22 @@
 library pspdfkit;
 
 import 'dart:async';
-import 'package:flutter/foundation.dart';
-import 'package:flutter/services.dart';
 import 'dart:io';
-import 'package:flutter/material.dart';
 
-part 'src/processor/pdf_image_page.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 part 'android_permission_status.dart';
-
 part 'configuration_options.dart';
-
-part 'src/processor/new_page.dart';
-
-part 'src/processor/page_pattern.dart';
-
-part 'src/processor/page_position.dart';
-
-part 'src/processor/page_z_order.dart';
-
-part 'src/processor/pdf_page.dart';
-
-part 'src/processor/page_size.dart';
-
 part 'pspdfkit_processor.dart';
+part 'src/processor/new_page.dart';
+part 'src/processor/page_pattern.dart';
+part 'src/processor/page_position.dart';
+part 'src/processor/page_size.dart';
+part 'src/processor/page_z_order.dart';
+part 'src/processor/pdf_image_page.dart';
+part 'src/processor/pdf_page.dart';
 
 /// PSPDFKit plugin to load PDF and image documents on both platform iOS and Android.
 class Pspdfkit {
@@ -265,6 +257,8 @@ class Pspdfkit {
   /// Called when instant document download fails.
   static void Function(String? documentId, String? error)?
       instantDownloadFailed;
+
+  static void Function()? onAnnotationSelected;
 
   static Future<void> _platformCallHandler(MethodCall call) {
     try {

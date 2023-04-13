@@ -7,6 +7,7 @@ import android.view.View
 import androidx.fragment.app.FragmentActivity
 import androidx.fragment.app.FragmentContainerView
 import androidx.fragment.app.commit
+import com.pspdfkit.annotations.AnnotationType
 import com.pspdfkit.document.formatters.DocumentJsonFormatter
 import com.pspdfkit.flutter.pspdfkit.util.DocumentJsonDataProvider
 import com.pspdfkit.flutter.pspdfkit.util.Preconditions.requireNotNullNotEmpty
@@ -17,6 +18,9 @@ import com.pspdfkit.forms.ChoiceFormElement
 import com.pspdfkit.forms.EditableButtonFormElement
 import com.pspdfkit.forms.SignatureFormElement
 import com.pspdfkit.forms.TextFormElement
+import com.pspdfkit.instant.ui.InstantPdfActivityIntentBuilder
+import com.pspdfkit.instant.ui.InstantPdfFragment
+import com.pspdfkit.ui.PdfFragment
 import com.pspdfkit.ui.PdfUiFragment
 import com.pspdfkit.ui.PdfUiFragmentBuilder
 import io.flutter.plugin.common.BinaryMessenger
@@ -30,6 +34,9 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.schedulers.Schedulers
 import org.json.JSONObject
 import java.io.ByteArrayOutputStream
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
 
 internal class PSPDFKitView(
     val context: Context,
@@ -41,6 +48,7 @@ internal class PSPDFKitView(
     private var fragmentContainerView: FragmentContainerView? = FragmentContainerView(context)
     private val methodChannel: MethodChannel
     private val pdfUiFragment: PdfUiFragment
+
 
     init {
         fragmentContainerView?.id = View.generateViewId()
@@ -71,7 +79,7 @@ internal class PSPDFKitView(
         fragmentContainerView?.let {
             it.addOnAttachStateChangeListener(object : View.OnAttachStateChangeListener {
                 override fun onViewAttachedToWindow(view: View) {
-                  getFragmentActivity(context).supportFragmentManager.commit {
+                    getFragmentActivity(context).supportFragmentManager.commit {
                         add(it.id, pdfUiFragment)
                         setReorderingAllowed(true)
                     }
@@ -185,8 +193,8 @@ internal class PSPDFKitView(
                                     result.error(
                                         LOG_TAG,
                                         "\"value\" argument needs a list of " +
-                                            "integers to set selected indexes for a choice " +
-                                            "form element (e.g.: \"1, 3, 5\").",
+                                                "integers to set selected indexes for a choice " +
+                                                "form element (e.g.: \"1, 3, 5\").",
                                         null
                                     )
                                 }
@@ -342,6 +350,15 @@ internal class PSPDFKitView(
                         { result.success(annotationJsonList) }
                     )
             }
+            "getAllAnnotations" -> {
+                val annotationJsonList = ArrayList<String>()
+                // noinspection checkResult
+                document.annotationProvider.getAllAnnotationsOfTypeAsync(EnumSet.of(AnnotationType.HIGHLIGHT))
+                    .subscribeOn(Schedulers.computation()).observeOn(AndroidSchedulers.mainThread())
+                    .subscribe { annotation ->
+                        result.success(annotation.toInstantJson())
+                    }
+            }
             "getAllUnsavedAnnotations" -> {
                 val outputStream = ByteArrayOutputStream()
                 // noinspection checkResult
@@ -366,23 +383,27 @@ internal class PSPDFKitView(
                     .observeOn(AndroidSchedulers.mainThread())
                     .subscribe(result::success)
             }
+            "scrollToPage" -> {
+                pdfUiFragment.pageIndex = call.arguments as Int
+                result.success(true)
+            }
             else -> result.notImplemented()
         }
     }
 
     // Get Fragment Activity from context
     private fun getFragmentActivity(context: Context): FragmentActivity {
-       return when (context) {
-           is FragmentActivity -> {
-               context
-           }
-           is MutableContextWrapper -> {
-               getFragmentActivity(context.baseContext)
-           }
-           else -> {
-               throw IllegalStateException("Context is not a FragmentActivity")
-           }
-       }
+        return when (context) {
+            is FragmentActivity -> {
+                context
+            }
+            is MutableContextWrapper -> {
+                getFragmentActivity(context.baseContext)
+            }
+            else -> {
+                throw IllegalStateException("Context is not a FragmentActivity")
+            }
+        }
     }
 
     companion object {
